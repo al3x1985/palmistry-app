@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../features/editor/ui/editor_screen.dart';
 import '../features/history/ui/history_screen.dart';
+import '../features/onboarding/ui/onboarding_screen.dart';
 import '../features/reading/ui/reading_result_screen.dart';
 import '../features/reference/ui/reference_screen.dart';
 import '../features/scanner/ui/scanner_screen.dart';
@@ -11,6 +12,12 @@ import '../features/settings/ui/settings_screen.dart';
 final GoRouter appRouter = GoRouter(
   initialLocation: '/scanner',
   routes: [
+    // Onboarding (full-screen, outside shell)
+    GoRoute(
+      path: '/onboarding',
+      builder: (context, state) => const OnboardingScreen(),
+    ),
+
     StatefulShellRoute.indexedStack(
       builder: (context, state, navigationShell) {
         return ScaffoldWithNavBar(navigationShell: navigationShell);
