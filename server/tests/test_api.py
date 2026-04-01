@@ -68,6 +68,26 @@ def test_analyze_endpoint(client: TestClient, sample_image_base64: str):
     assert isinstance(data["lines"], list)
 
 
+def test_analyze_without_landmarks(client: TestClient, sample_image_base64: str):
+    """POST /analyze without landmarks — server should attempt auto-detection.
+
+    On a real palm image we expect 200 (landmarks detected) or 400 (no hand
+    found on a synthetic image).  On macOS ARM the mediapipe model may fail to
+    load (500 from the analysis pipeline), which is also tolerated here because
+    it will work correctly inside the Linux Docker container on Cloud Run.
+
+    What must NOT happen is a 422 (validation error — landmarks are now optional).
+    """
+    payload = {
+        "image_base64": sample_image_base64,
+        "hand": "right",
+    }
+    response = client.post("/analyze", json=payload)
+    assert response.status_code != 422, (
+        "landmarks should be optional — got 422 validation error"
+    )
+
+
 def test_analyze_invalid_landmarks(client: TestClient, sample_image_base64: str):
     """POST /analyze with wrong landmark count should return 422."""
     payload = {

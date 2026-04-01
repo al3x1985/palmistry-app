@@ -5,3 +5,5 @@ server/.venv/
 palmistry_app/firebase/functions/node_modules/
 palmistry_app/firebase/functions/lib/
 palmistry_app/android/app/google-services.json
+# MediaPipe model file — downloaded during Docker build, not tracked in git
+server/cv_pipeline/hand_landmarker.task

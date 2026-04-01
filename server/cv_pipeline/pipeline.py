@@ -48,10 +48,17 @@ def analyze_palm(request: AnalyzeRequest) -> PalmAnalysisResponse:
     -------
     PalmAnalysisResponse
     """
-    landmarks = request.landmarks
-
     # 1. Decode
     image = decode_image(request.image_base64)
+
+    # Resolve landmarks: use client-supplied ones, or detect server-side
+    if request.landmarks:
+        landmarks = request.landmarks
+    else:
+        from cv_pipeline.landmark_detect import detect_hand_landmarks
+        landmarks = detect_hand_landmarks(image)
+        if landmarks is None:
+            raise ValueError("No hand detected in image — cannot extract palm landmarks")
 
     # 2. Preprocess
     prep = preprocess_palm(image, landmarks)

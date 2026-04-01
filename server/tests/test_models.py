@@ -36,6 +36,26 @@ class TestAnalyzeRequest:
         assert len(req.landmarks) == 21
         assert req.hand == "left"
 
+    def test_analyze_request_without_landmarks(self):
+        """landmarks is optional — server will detect them automatically."""
+        data = {
+            "image_base64": "abc123",
+            "hand": "right",
+        }
+        req = AnalyzeRequest(**data)
+        assert req.landmarks is None
+        assert req.hand == "right"
+
+    def test_analyze_request_null_landmarks(self):
+        """Explicit None is also accepted."""
+        data = {
+            "image_base64": "abc123",
+            "landmarks": None,
+            "hand": "left",
+        }
+        req = AnalyzeRequest(**data)
+        assert req.landmarks is None
+
     def test_analyze_request_wrong_landmark_count_raises(self):
         data = {
             "image_base64": "abc123",
@@ -47,6 +67,7 @@ class TestAnalyzeRequest:
         assert "Expected 21 landmarks" in str(exc_info.value)
 
     def test_analyze_request_zero_landmarks_raises(self):
+        """An empty list (not None) is still invalid — must be 21 if supplied."""
         data = {
             "image_base64": "abc123",
             "landmarks": [],

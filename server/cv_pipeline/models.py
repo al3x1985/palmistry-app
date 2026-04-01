@@ -9,13 +9,15 @@ class Landmark(BaseModel):
 
 class AnalyzeRequest(BaseModel):
     image_base64: str
-    landmarks: list[Landmark]  # must be exactly 21
+    # Optional — when omitted or None the server detects landmarks automatically.
+    # When provided, must be exactly 21 points.
+    landmarks: list[Landmark] | None = None
     hand: Literal["left", "right"]
 
     @field_validator("landmarks")
     @classmethod
     def check_landmark_count(cls, v):
-        if len(v) != 21:
+        if v is not None and len(v) != 21:
             raise ValueError(f"Expected 21 landmarks, got {len(v)}")
         return v
 
