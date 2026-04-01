@@ -1,0 +1,46 @@
+name: palmistry_app
+description: Palm reading app with CV line detection and AI interpretation
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.11.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  flutter_bloc: ^8.1.6
+  equatable: ^2.0.5
+  go_router: ^14.2.0
+  drift: ^2.20.0
+  sqlite3_flutter_libs: ^0.5.24
+  path_provider: ^2.1.4
+  path: ^1.9.0
+  get_it: ^7.7.0
+  http: ^1.2.2
+  uuid: ^4.4.2
+  intl: ^0.20.2
+  shared_preferences: ^2.3.2
+  camera: ^0.11.0
+  image_picker: ^1.1.2
+  firebase_core: ^3.4.0
+  firebase_analytics: ^11.3.2
+  firebase_crashlytics: ^4.1.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+  drift_dev: ^2.20.0
+  build_runner: ^2.4.12
+  bloc_test: ^9.1.7
+  mocktail: ^1.0.4
+
+flutter:
+  uses-material-design: true
+  generate: true
+  assets:
+    - assets/rules/
+    - assets/content/
