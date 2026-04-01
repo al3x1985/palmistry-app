@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import 'router.dart';
 import 'theme.dart';
 
 class PalmistryApp extends StatelessWidget {
-  const PalmistryApp({super.key});
+  final bool onboardingCompleted;
+
+  const PalmistryApp({super.key, this.onboardingCompleted = false});
 
   @override
   Widget build(BuildContext context) {
@@ -12,7 +15,7 @@ class PalmistryApp extends StatelessWidget {
       title: 'Palmistry',
       debugShowCheckedModeBanner: false,
       theme: buildAppTheme(),
-      routerConfig: appRouter,
+      routerConfig: buildRouter(onboardingCompleted: onboardingCompleted),
     );
   }
 }

@@ -9,8 +9,8 @@ import '../features/reference/ui/reference_screen.dart';
 import '../features/scanner/ui/scanner_screen.dart';
 import '../features/settings/ui/settings_screen.dart';
 
-final GoRouter appRouter = GoRouter(
-  initialLocation: '/scanner',
+GoRouter buildRouter({bool onboardingCompleted = false}) => GoRouter(
+  initialLocation: onboardingCompleted ? '/scanner' : '/onboarding',
   routes: [
     // Onboarding (full-screen, outside shell)
     GoRoute(
