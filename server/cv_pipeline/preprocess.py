@@ -118,16 +118,8 @@ def preprocess_palm(image: np.ndarray, landmarks: list[Landmark]) -> PreprocessR
     # 6. Build hand mask from landmarks
     hand_mask = _build_hand_mask(landmarks, roi_w, roi_h, roi_offset, w, h)
 
-    # 7. Canny with moderate thresholds (not too strict, not too loose)
-    # Use median of pixel values to auto-tune thresholds
-    median_val = np.median(blurred[hand_mask > 0]) if np.any(hand_mask > 0) else 128
-    lower = int(max(0, 0.33 * median_val))
-    upper = int(min(255, 1.0 * median_val))
-    # Ensure minimum gap
-    lower = max(20, lower)
-    upper = max(lower + 30, upper)
-
-    canny_edges = cv2.Canny(blurred, threshold1=lower, threshold2=upper)
+    # 7. Canny — low thresholds are OK because hand mask removes background noise
+    canny_edges = cv2.Canny(blurred, threshold1=30, threshold2=90)
 
     # 8. Apply hand mask — remove all edges outside the palm
     edges = cv2.bitwise_and(canny_edges, hand_mask)
