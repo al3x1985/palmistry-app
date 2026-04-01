@@ -137,7 +137,6 @@ class ScannerBloc extends Bloc<ScannerEvent, ScannerState> {
 
       final scanResult = await _cvClient.analyzePalm(
         imageBase64: base64Image,
-        landmarks: [],
         hand: event.hand.name,
       );
 

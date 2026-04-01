@@ -25,19 +25,18 @@ class CvApiClient {
             ),
         _client = client ?? http.Client();
 
-  /// Sends the palm image (base64-encoded) and optional MediaPipe [landmarks]
-  /// to the CV server `/analyze` endpoint.
+  /// Sends the palm image (base64-encoded) to the CV server `/analyze`
+  /// endpoint. The server runs MediaPipe Hands server-side to detect landmarks
+  /// automatically, so no landmarks need to be supplied by the client.
   ///
   /// Returns a parsed [ScanResult] on success.
   /// Throws [CvApiException] on non-200 responses or network errors.
   Future<ScanResult> analyzePalm({
     required String imageBase64,
-    required List<Map<String, double>> landmarks,
     required String hand,
   }) async {
     final body = jsonEncode({
-      'image': imageBase64,
-      'landmarks': landmarks,
+      'image_base64': imageBase64,
       'hand': hand,
     });
 
