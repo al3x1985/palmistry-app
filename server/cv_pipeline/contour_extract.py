@@ -82,19 +82,12 @@ def extract_line_candidates(
 
         pts = cnt.reshape(-1, 2)
 
-        # Aspect ratio filter: discard near-circular blobs
-        # But be lenient — curved palm lines can have high shorter/longer ratio
-        if roi_w is not None and roi_h is not None:
-            x_range = float(np.ptp(pts[:, 0]))
-            y_range = float(np.ptp(pts[:, 1]))
-            longer = max(x_range, y_range, 1)
-            shorter = min(x_range, y_range)
-            # Only discard very round blobs (ratio > 0.7)
-            if shorter / longer > 0.7:
-                continue
-
-        # Palm boundary filter
-        if hull is not None and not _contour_inside_hull(pts, hull):
+        # Aspect ratio filter: only discard perfectly round blobs
+        x_range = float(np.ptp(pts[:, 0]))
+        y_range = float(np.ptp(pts[:, 1]))
+        longer = max(x_range, y_range, 1)
+        shorter = min(x_range, y_range)
+        if shorter / longer > 0.85:
             continue
 
         candidates.append((length, pts))

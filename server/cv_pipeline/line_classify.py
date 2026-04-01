@@ -5,138 +5,11 @@ import numpy as np
 from cv_pipeline.models import Landmark
 
 
-# ---------------------------------------------------------------------------
-# Geometry helpers
-# ---------------------------------------------------------------------------
-
-def _avg_y_px(points: np.ndarray) -> float:
-    """Return mean y position of points in pixels."""
-    return float(np.mean(points[:, 1]))
-
-
-def _avg_x_px(points: np.ndarray) -> float:
-    """Return mean x position of points in pixels."""
-    return float(np.mean(points[:, 0]))
-
-
-def _vertical_span(points: np.ndarray) -> float:
-    """Return y range of points in pixels."""
-    return float(np.ptp(points[:, 1]))
-
-
-def _horizontal_span(points: np.ndarray) -> float:
-    """Return x range of points in pixels."""
-    return float(np.ptp(points[:, 0]))
-
-
-def _is_horizontal(points: np.ndarray) -> bool:
-    """True when the contour spans more horizontally than vertically."""
-    v_span = _vertical_span(points)
-    h_span = _horizontal_span(points)
-    return h_span > 0 and h_span > v_span * 0.8  # relaxed from 2:1
-
-
-def _is_vertical(points: np.ndarray) -> bool:
-    """True when the contour spans more vertically than horizontally."""
-    v_span = _vertical_span(points)
-    h_span = _horizontal_span(points)
-    return v_span > 0 and v_span > h_span * 1.2
-
-
-# ---------------------------------------------------------------------------
-# Landmark projection helpers
-# ---------------------------------------------------------------------------
-
-def _lm_to_roi(
-    lm: Landmark,
-    original_size: tuple[int, int],
-    roi_offset: tuple[int, int],
-) -> tuple[float, float]:
-    """Project a normalised landmark into ROI pixel coordinates."""
+def _lm_to_roi(lm: Landmark, original_size: tuple[int, int], roi_offset: tuple[int, int]) -> tuple[float, float]:
     img_w, img_h = original_size
     off_x, off_y = roi_offset
     return lm.x * img_w - off_x, lm.y * img_h - off_y
 
-
-def _compute_zones(
-    landmarks: list[Landmark],
-    roi_size: tuple[int, int],
-    roi_offset: tuple[int, int],
-    original_size: tuple[int, int],
-) -> dict:
-    """Derive classification zones from MediaPipe landmark positions.
-
-    Heart line zone
-    ---------------
-    Runs just below the finger MCP row (landmarks 5, 9, 13, 17).
-    Y band: [mcp_y_mean, mcp_y_mean + 0.15 * palm_height]
-
-    Head line zone
-    --------------
-    Runs horizontally in the middle of the palm, between heart line bottom
-    and life-line start.
-    Y band: [heart_bottom, heart_bottom + 0.25 * palm_height]
-
-    Life line zone
-    --------------
-    Curves from the thumb/index web space (landmark 2-5 area) down toward the
-    wrist.  X constraint: avg_x < life_x_threshold (left third of palm).
-    Vertical span must cover > 20 % of palm height.
-
-    Fate line zone
-    --------------
-    Vertical, running up the centre of the palm.  X band:
-    [centre_x - 0.15 * palm_width, centre_x + 0.15 * palm_width].
-    """
-    roi_w, roi_h = roi_size
-
-    # MCP row: landmarks 5 (index MCP), 9 (middle MCP), 13 (ring MCP), 17 (pinky MCP)
-    mcp_ys = []
-    for idx in (5, 9, 13, 17):
-        _, y = _lm_to_roi(landmarks[idx], original_size, roi_offset)
-        mcp_ys.append(y)
-    mcp_y_mean = float(np.mean(mcp_ys))
-
-    # Wrist (landmark 0) gives the bottom reference
-    _, wrist_y = _lm_to_roi(landmarks[0], original_size, roi_offset)
-
-    palm_height = max(wrist_y - mcp_y_mean, 1.0)
-
-    # Palm width: landmark 5 (index MCP) to landmark 17 (pinky MCP)
-    x5, _ = _lm_to_roi(landmarks[5], original_size, roi_offset)
-    x17, _ = _lm_to_roi(landmarks[17], original_size, roi_offset)
-    palm_width = max(abs(x17 - x5), 1.0)
-    palm_centre_x = (x5 + x17) / 2.0
-
-    # Wider zones — real palm lines vary a lot in position
-    heart_top    = mcp_y_mean
-    heart_bottom = mcp_y_mean + 0.25 * palm_height  # was 0.15
-    head_top     = mcp_y_mean + 0.15 * palm_height
-    head_bottom  = mcp_y_mean + 0.50 * palm_height  # was 0.40
-
-    # Life line: left side of palm, any significant vertical curve
-    x2, _ = _lm_to_roi(landmarks[2], original_size, roi_offset)
-    life_x_threshold = x2 + 0.25 * palm_width  # was 0.10 — more generous
-    life_min_vspan   = 0.15 * palm_height  # was 0.20
-
-    fate_x_lo = palm_centre_x - 0.25 * palm_width  # was 0.15
-    fate_x_hi = palm_centre_x + 0.25 * palm_width
-
-    return {
-        "heart_top":          heart_top,
-        "heart_bottom":       heart_bottom,
-        "head_top":           head_top,
-        "head_bottom":        head_bottom,
-        "life_x_threshold":   life_x_threshold,
-        "life_min_vspan":     life_min_vspan,
-        "fate_x_lo":          fate_x_lo,
-        "fate_x_hi":          fate_x_hi,
-    }
-
-
-# ---------------------------------------------------------------------------
-# Public classifier
-# ---------------------------------------------------------------------------
 
 def classify_lines(
     candidates: list[np.ndarray],
@@ -145,95 +18,100 @@ def classify_lines(
     roi_offset: tuple,
     original_size: tuple | None = None,
 ) -> list[dict]:
-    """Classify line candidates by position relative to landmarks.
+    """Classify top line candidates by their position.
 
-    Rules (all derived from MediaPipe landmark geometry)
-    ----
-    - heart : horizontal, avg_y in [mcp_y, mcp_y + 15% palm_height]
-    - head  : horizontal, avg_y in [heart_bottom, heart_bottom + 25% palm_height]
-    - life  : avg_x < thumb-base x + 10% palm_width, vertical span > 20% palm_height
-    - fate  : vertical, avg_x within ±15% palm_width of palm centre
+    Simple approach: take up to 4 best candidates and assign types based
+    on relative position within the palm.
 
-    Each type is assigned at most once (first matching candidate wins).
-
-    Parameters
-    ----------
-    candidates:
-        List of Nx2 int arrays (ROI pixel coordinates).
-    landmarks:
-        21 Landmark objects with normalised (0-1) coordinates.
-    roi_size:
-        (width, height) of the ROI in pixels.
-    roi_offset:
-        (x, y) pixel offset of the ROI in the original image.
-    original_size:
-        (width, height) of the original image.  When ``None``, a fallback
-        based on the ROI size is used so the function remains usable in unit
-        tests that don't supply it.
-
-    Returns
-    -------
-    list[dict]
-        Each element: ``{"line_type": str, "points": np.ndarray}``.
+    - Sort horizontal-ish lines by Y position → topmost = heart, next = head
+    - Left-side line with significant vertical span → life
+    - Central vertical line → fate
     """
+    if not candidates:
+        return []
+
     if original_size is None:
-        # Fallback: assume the ROI covers the whole image (no offset).
-        # This keeps unit tests working when original_size is not supplied.
         roi_w, roi_h = roi_size
         off_x, off_y = roi_offset
         original_size = (roi_w + off_x, roi_h + off_y)
 
-    zones = _compute_zones(landmarks, roi_size, roi_offset, original_size)
+    roi_w, roi_h = roi_size
+
+    # Compute palm center and thumb position for reference
+    _, wrist_y = _lm_to_roi(landmarks[0], original_size, roi_offset)
+    mcp_positions = []
+    for idx in [5, 9, 13, 17]:
+        x, y = _lm_to_roi(landmarks[idx], original_size, roi_offset)
+        mcp_positions.append((x, y))
+    mcp_y_mean = np.mean([p[1] for p in mcp_positions])
+    palm_centre_x = np.mean([p[0] for p in mcp_positions])
+
+    # Categorize each candidate
+    scored: list[dict] = []
+    for pts in candidates:
+        if len(pts) < 2:
+            continue
+        avg_x = float(np.mean(pts[:, 0]))
+        avg_y = float(np.mean(pts[:, 1]))
+        h_span = float(np.ptp(pts[:, 0]))
+        v_span = float(np.ptp(pts[:, 1]))
+        is_more_horizontal = h_span >= v_span * 0.7
+        is_more_vertical = v_span >= h_span * 1.2
+        length = float(np.sqrt(h_span**2 + v_span**2))
+
+        scored.append({
+            "points": pts,
+            "avg_x": avg_x,
+            "avg_y": avg_y,
+            "h_span": h_span,
+            "v_span": v_span,
+            "horizontal": is_more_horizontal,
+            "vertical": is_more_vertical,
+            "length": length,
+        })
 
     assigned: set[str] = set()
     results: list[dict] = []
 
-    for pts in candidates:
-        if len(pts) < 2:
-            continue
+    # 1. Find horizontal lines sorted by Y (top to bottom)
+    horizontals = sorted(
+        [s for s in scored if s["horizontal"]],
+        key=lambda s: s["avg_y"]
+    )
 
-        avg_y   = _avg_y_px(pts)
-        avg_x   = _avg_x_px(pts)
-        v_span  = _vertical_span(pts)
-        horizontal = _is_horizontal(pts)
-        vertical   = _is_vertical(pts)
+    # Top horizontal → heart
+    if horizontals and "heart" not in assigned:
+        results.append({"line_type": "heart", "points": horizontals[0]["points"]})
+        assigned.add("heart")
+        scored = [s for s in scored if s is not horizontals[0]]
+        horizontals = horizontals[1:]
 
-        matched: str | None = None
+    # Next horizontal → head
+    if horizontals and "head" not in assigned:
+        results.append({"line_type": "head", "points": horizontals[0]["points"]})
+        assigned.add("head")
+        scored = [s for s in scored if s is not horizontals[0]]
+        horizontals = horizontals[1:]
 
-        # Heart line: horizontal band just below MCPs
-        if (
-            "heart" not in assigned
-            and horizontal
-            and zones["heart_top"] <= avg_y <= zones["heart_bottom"]
-        ):
-            matched = "heart"
+    # 2. Left-side line with vertical span → life
+    left_candidates = sorted(
+        [s for s in scored if s["avg_x"] < palm_centre_x and s["v_span"] > roi_h * 0.05],
+        key=lambda s: s["v_span"],
+        reverse=True,
+    )
+    if left_candidates and "life" not in assigned:
+        results.append({"line_type": "life", "points": left_candidates[0]["points"]})
+        assigned.add("life")
+        scored = [s for s in scored if s is not left_candidates[0]]
 
-        # Head line: horizontal band below heart line
-        elif (
-            "head" not in assigned
-            and horizontal
-            and zones["head_top"] <= avg_y <= zones["head_bottom"]
-        ):
-            matched = "head"
-
-        # Life line: left/thumb side, significant vertical span
-        elif (
-            "life" not in assigned
-            and avg_x < zones["life_x_threshold"]
-            and v_span > zones["life_min_vspan"]
-        ):
-            matched = "life"
-
-        # Fate line: vertical, central x band
-        elif (
-            "fate" not in assigned
-            and vertical
-            and zones["fate_x_lo"] <= avg_x <= zones["fate_x_hi"]
-        ):
-            matched = "fate"
-
-        if matched is not None:
-            assigned.add(matched)
-            results.append({"line_type": matched, "points": pts})
+    # 3. Central vertical → fate
+    verticals = sorted(
+        [s for s in scored if s["vertical"] and abs(s["avg_x"] - palm_centre_x) < roi_w * 0.3],
+        key=lambda s: s["length"],
+        reverse=True,
+    )
+    if verticals and "fate" not in assigned:
+        results.append({"line_type": "fate", "points": verticals[0]["points"]})
+        assigned.add("fate")
 
     return results
