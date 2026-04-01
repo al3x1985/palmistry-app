@@ -1,0 +1,98 @@
+[
+  {
+    "id": "life_01",
+    "conditions": { "lineType": "life", "length": "long", "depth": "deep", "curvature": "curved" },
+    "category": "health",
+    "trait": "Сильная витальность",
+    "confidence": 0.85,
+    "description": "Длинная глубокая линия жизни с широким изгибом может указывать на активный образ жизни, высокий уровень энергии и хорошую жизнестойкость."
+  },
+  {
+    "id": "life_02",
+    "conditions": { "lineType": "life", "length": "short" },
+    "category": "health",
+    "trait": "Внутренняя сила",
+    "confidence": 0.70,
+    "description": "Короткая линия жизни не связана с продолжительностью жизни. Она может указывать на внутреннюю силу и способность преодолевать трудности."
+  },
+  {
+    "id": "life_03",
+    "conditions": { "lineType": "life", "curvature": "straight" },
+    "category": "health",
+    "trait": "Склонность к утомляемости",
+    "confidence": 0.72,
+    "description": "Прямая линия жизни, расположенная близко к большому пальцу, может говорить о тенденции к быстрой утомляемости и потребности в регулярном отдыхе."
+  },
+  {
+    "id": "life_04",
+    "conditions": { "lineType": "life", "curvature": "steep" },
+    "category": "personality",
+    "trait": "Энтузиазм и жизнелюбие",
+    "confidence": 0.82,
+    "description": "Линия жизни с широким полукругом может свидетельствовать о жизнелюбии, энтузиазме и склонности к активному образу жизни."
+  },
+  {
+    "id": "life_05",
+    "conditions": { "lineType": "life", "depth": "deep" },
+    "category": "health",
+    "trait": "Хорошая жизненная энергия",
+    "confidence": 0.80,
+    "description": "Глубокая линия жизни традиционно ассоциируется с хорошим запасом жизненной энергии и устойчивостью к стрессу."
+  },
+  {
+    "id": "life_06",
+    "conditions": { "lineType": "life", "depth": "faint" },
+    "category": "health",
+    "trait": "Чувствительность к окружению",
+    "confidence": 0.73,
+    "description": "Тонкая линия жизни может указывать на повышенную чувствительность к окружающей среде и склонность к переменам настроения."
+  },
+  {
+    "id": "life_07",
+    "conditions": { "lineType": "life", "length": "long", "curvature": "curved" },
+    "category": "health",
+    "trait": "Выносливость",
+    "confidence": 0.81,
+    "description": "Длинная изогнутая линия жизни может свидетельствовать о хорошей выносливости и способности справляться с длительными нагрузками."
+  },
+  {
+    "id": "life_08",
+    "conditions": { "lineType": "life", "startPoint": "between_thumb_index" },
+    "category": "personality",
+    "trait": "Уверенность в себе",
+    "confidence": 0.78,
+    "description": "Линия жизни, начинающаяся высоко между большим и указательным пальцами, может указывать на амбициозность и уверенность в себе."
+  },
+  {
+    "id": "life_09",
+    "conditions": { "lineType": "life", "length": "medium", "depth": "medium" },
+    "category": "health",
+    "trait": "Умеренная витальность",
+    "confidence": 0.74,
+    "description": "Линия жизни средней длины и глубины может говорить об умеренном уровне энергии и сбалансированном подходе к здоровью."
+  },
+  {
+    "id": "life_10",
+    "conditions": { "lineType": "life", "depth": "deep", "curvature": "steep" },
+    "category": "health",
+    "trait": "Крепкое здоровье",
+    "confidence": 0.83,
+    "description": "Глубокая линия жизни с выраженным изгибом может указывать на склонность к крепкому здоровью и высокую физическую активность."
+  },
+  {
+    "id": "life_11",
+    "conditions": { "lineType": "life", "length": "long", "depth": "deep" },
+    "category": "personality",
+    "trait": "Стойкость характера",
+    "confidence": 0.80,
+    "description": "Длинная глубокая линия жизни может свидетельствовать о стойком характере и способности сохранять оптимизм в трудных ситуациях."
+  },
+  {
+    "id": "life_12",
+    "conditions": { "lineType": "life", "endPoint": "wrist" },
+    "category": "health",
+    "trait": "Запас жизненных сил",
+    "confidence": 0.76,
+    "description": "Линия жизни, доходящая до запястья, может указывать на хороший запас жизненных сил и устойчивую энергетику на протяжении жизни."
+  }
+]

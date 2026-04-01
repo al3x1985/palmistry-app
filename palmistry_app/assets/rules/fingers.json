@@ -1,0 +1,50 @@
+[
+  {
+    "id": "finger_01",
+    "conditions": { "finger": "index", "proportion": "long" },
+    "category": "personality",
+    "trait": "Амбициозность",
+    "confidence": 0.78,
+    "description": "Длинный указательный палец может указывать на амбициозность, лидерские качества и стремление к влиянию."
+  },
+  {
+    "id": "finger_02",
+    "conditions": { "finger": "ring", "proportion": "long" },
+    "category": "personality",
+    "trait": "Творческие способности",
+    "confidence": 0.77,
+    "description": "Длинный безымянный палец может свидетельствовать о творческих способностях, склонности к риску и стремлении к признанию."
+  },
+  {
+    "id": "finger_03",
+    "conditions": { "finger": "pinky", "proportion": "long" },
+    "category": "personality",
+    "trait": "Коммуникативные навыки",
+    "confidence": 0.76,
+    "description": "Длинный мизинец может указывать на выраженные коммуникативные навыки, дипломатичность и способность к убеждению."
+  },
+  {
+    "id": "finger_04",
+    "conditions": { "finger": "index", "proportion": "equal" },
+    "category": "personality",
+    "trait": "Сбалансированность характера",
+    "confidence": 0.74,
+    "description": "Указательный и безымянный пальцы равной длины могут говорить о сбалансированности характера и гармонии между амбициями и творчеством."
+  },
+  {
+    "id": "finger_05",
+    "conditions": { "finger": "index", "proportion": "short" },
+    "category": "personality",
+    "trait": "Скромность и исполнительность",
+    "confidence": 0.73,
+    "description": "Короткий указательный палец может свидетельствовать о скромности, склонности к исполнительности и предпочтении работать в команде."
+  },
+  {
+    "id": "finger_06",
+    "conditions": { "finger": "pinky", "proportion": "short" },
+    "category": "personality",
+    "trait": "Сдержанность в общении",
+    "confidence": 0.72,
+    "description": "Короткий мизинец может указывать на сдержанность в общении и склонность к действиям вместо слов."
+  }
+]

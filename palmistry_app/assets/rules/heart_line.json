@@ -1,0 +1,122 @@
+[
+  {
+    "id": "heart_01",
+    "conditions": { "lineType": "heart", "length": "long", "curvature": "curved", "endPoint": "jupiter" },
+    "category": "love",
+    "trait": "Идеализм в любви",
+    "confidence": 0.85,
+    "description": "Длинная изогнутая линия сердца, достигающая холма Юпитера, может указывать на высокие стандарты в отношениях и склонность к идеализации партнёра."
+  },
+  {
+    "id": "heart_02",
+    "conditions": { "lineType": "heart", "length": "short", "curvature": "straight" },
+    "category": "love",
+    "trait": "Сдержанность в чувствах",
+    "confidence": 0.80,
+    "description": "Короткая прямая линия сердца может свидетельствовать о рациональном подходе к отношениям и склонности контролировать эмоции."
+  },
+  {
+    "id": "heart_03",
+    "conditions": { "lineType": "heart", "depth": "deep", "curvature": "curved" },
+    "category": "love",
+    "trait": "Глубокие эмоциональные переживания",
+    "confidence": 0.82,
+    "description": "Глубокая изогнутая линия сердца указывает на страстную натуру, способную к глубоким эмоциональным переживаниям и сильной привязанности."
+  },
+  {
+    "id": "heart_04",
+    "conditions": { "lineType": "heart", "depth": "faint" },
+    "category": "love",
+    "trait": "Деликатность в чувствах",
+    "confidence": 0.75,
+    "description": "Тонкая линия сердца может говорить о деликатности в проявлении чувств и склонности к сдержанному выражению эмоций."
+  },
+  {
+    "id": "heart_05",
+    "conditions": { "lineType": "heart", "endPoint": "saturn" },
+    "category": "love",
+    "trait": "Практичный подход к любви",
+    "confidence": 0.78,
+    "description": "Линия сердца, заканчивающаяся у холма Сатурна, может указывать на практичный подход к отношениям с вниманием к материальным аспектам."
+  },
+  {
+    "id": "heart_06",
+    "conditions": { "lineType": "heart", "length": "long", "curvature": "straight" },
+    "category": "personality",
+    "trait": "Эмоциональная стабильность",
+    "confidence": 0.80,
+    "description": "Длинная прямая линия сердца может свидетельствовать об эмоциональной стабильности и уравновешенном характере."
+  },
+  {
+    "id": "heart_07",
+    "conditions": { "lineType": "heart", "length": "long", "depth": "deep" },
+    "category": "love",
+    "trait": "Верность и преданность",
+    "confidence": 0.83,
+    "description": "Длинная глубокая линия сердца традиционно ассоциируется со склонностью к верности и глубокой эмоциональной привязанности."
+  },
+  {
+    "id": "heart_08",
+    "conditions": { "lineType": "heart", "curvature": "steep" },
+    "category": "love",
+    "trait": "Экспрессивность чувств",
+    "confidence": 0.77,
+    "description": "Резко изогнутая линия сердца может указывать на яркую эмоциональную экспрессию и склонность к бурному проявлению чувств."
+  },
+  {
+    "id": "heart_09",
+    "conditions": { "lineType": "heart", "length": "medium", "curvature": "curved" },
+    "category": "love",
+    "trait": "Гармоничная эмоциональность",
+    "confidence": 0.76,
+    "description": "Линия сердца средней длины с плавным изгибом может говорить о сбалансированном эмоциональном мире и гармоничном подходе к отношениям."
+  },
+  {
+    "id": "heart_10",
+    "conditions": { "lineType": "heart", "endPoint": "between_jupiter_saturn" },
+    "category": "love",
+    "trait": "Баланс чувств и разума",
+    "confidence": 0.81,
+    "description": "Линия сердца, заканчивающаяся между холмами Юпитера и Сатурна, может указывать на способность балансировать между чувствами и разумом в отношениях."
+  },
+  {
+    "id": "heart_11",
+    "conditions": { "lineType": "heart", "depth": "deep", "curvature": "straight" },
+    "category": "personality",
+    "trait": "Эмоциональная сила",
+    "confidence": 0.79,
+    "description": "Глубокая прямая линия сердца может свидетельствовать о внутренней эмоциональной силе и способности сохранять самообладание."
+  },
+  {
+    "id": "heart_12",
+    "conditions": { "lineType": "heart", "length": "short", "depth": "deep" },
+    "category": "love",
+    "trait": "Интенсивные, но сфокусированные чувства",
+    "confidence": 0.77,
+    "description": "Короткая, но глубокая линия сердца может указывать на интенсивные чувства, направленные на узкий круг близких людей."
+  },
+  {
+    "id": "heart_13",
+    "conditions": { "lineType": "heart", "startPoint": "edge_of_palm", "curvature": "curved" },
+    "category": "love",
+    "trait": "Открытость в отношениях",
+    "confidence": 0.74,
+    "description": "Линия сердца, начинающаяся от края ладони с изгибом, может говорить об открытости и готовности к новым отношениям."
+  },
+  {
+    "id": "heart_14",
+    "conditions": { "lineType": "heart", "depth": "medium", "length": "long" },
+    "category": "love",
+    "trait": "Стабильная эмоциональная жизнь",
+    "confidence": 0.75,
+    "description": "Длинная линия сердца умеренной глубины может указывать на стабильную и продолжительную эмоциональную жизнь."
+  },
+  {
+    "id": "heart_15",
+    "conditions": { "lineType": "heart", "length": "short", "curvature": "curved" },
+    "category": "love",
+    "trait": "Импульсивность в чувствах",
+    "confidence": 0.73,
+    "description": "Короткая изогнутая линия сердца может свидетельствовать о склонности к импульсивным эмоциональным решениям и спонтанности в отношениях."
+  }
+]

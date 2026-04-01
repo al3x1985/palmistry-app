@@ -1,0 +1,98 @@
+[
+  {
+    "id": "head_01",
+    "conditions": { "lineType": "head", "length": "long", "curvature": "straight" },
+    "category": "personality",
+    "trait": "Логическое мышление",
+    "confidence": 0.85,
+    "description": "Длинная прямая линия головы может указывать на аналитический склад ума и склонность к логическому, последовательному мышлению."
+  },
+  {
+    "id": "head_02",
+    "conditions": { "lineType": "head", "length": "long", "curvature": "curved" },
+    "category": "personality",
+    "trait": "Богатое воображение",
+    "confidence": 0.83,
+    "description": "Длинная изогнутая линия головы может свидетельствовать о творческом складе ума, богатом воображении и развитой фантазии."
+  },
+  {
+    "id": "head_03",
+    "conditions": { "lineType": "head", "length": "short" },
+    "category": "personality",
+    "trait": "Практичное мышление",
+    "confidence": 0.78,
+    "description": "Короткая линия головы может говорить о практичном мышлении и способности быстро принимать решения без долгих размышлений."
+  },
+  {
+    "id": "head_04",
+    "conditions": { "lineType": "head", "depth": "deep" },
+    "category": "personality",
+    "trait": "Хорошая концентрация",
+    "confidence": 0.82,
+    "description": "Глубокая линия головы традиционно ассоциируется с хорошей памятью, высокой концентрацией внимания и ясностью мышления."
+  },
+  {
+    "id": "head_05",
+    "conditions": { "lineType": "head", "startPoint": "connected_to_life" },
+    "category": "personality",
+    "trait": "Осторожность в решениях",
+    "confidence": 0.80,
+    "description": "Линия головы, начинающаяся слитно с линией жизни, может указывать на осторожность, обдуманность и склонность тщательно взвешивать решения."
+  },
+  {
+    "id": "head_06",
+    "conditions": { "lineType": "head", "startPoint": "separate_from_life" },
+    "category": "personality",
+    "trait": "Независимость мышления",
+    "confidence": 0.79,
+    "description": "Линия головы, отделённая от линии жизни, может свидетельствовать о независимости мышления и склонности к самостоятельным решениям."
+  },
+  {
+    "id": "head_07",
+    "conditions": { "lineType": "head", "curvature": "steep" },
+    "category": "personality",
+    "trait": "Развитая интуиция",
+    "confidence": 0.76,
+    "description": "Резко изогнутая линия головы может указывать на развитую интуицию и склонность к творческому, нестандартному мышлению."
+  },
+  {
+    "id": "head_08",
+    "conditions": { "lineType": "head", "depth": "faint" },
+    "category": "personality",
+    "trait": "Гибкость мышления",
+    "confidence": 0.74,
+    "description": "Тонкая линия головы может говорить о гибкости мышления и способности легко переключаться между задачами."
+  },
+  {
+    "id": "head_09",
+    "conditions": { "lineType": "head", "length": "medium", "curvature": "straight" },
+    "category": "career",
+    "trait": "Деловая хватка",
+    "confidence": 0.77,
+    "description": "Линия головы средней длины с прямым направлением может указывать на хорошие деловые качества и практический подход к работе."
+  },
+  {
+    "id": "head_10",
+    "conditions": { "lineType": "head", "length": "long", "depth": "deep" },
+    "category": "career",
+    "trait": "Интеллектуальный потенциал",
+    "confidence": 0.84,
+    "description": "Длинная глубокая линия головы может свидетельствовать о высоком интеллектуальном потенциале и способности к глубокому анализу."
+  },
+  {
+    "id": "head_11",
+    "conditions": { "lineType": "head", "endPoint": "luna" },
+    "category": "personality",
+    "trait": "Творческое воображение",
+    "confidence": 0.81,
+    "description": "Линия головы, направленная к холму Луны, может указывать на склонность к мечтательности, развитое воображение и творческие способности."
+  },
+  {
+    "id": "head_12",
+    "conditions": { "lineType": "head", "depth": "medium", "curvature": "curved" },
+    "category": "personality",
+    "trait": "Адаптивное мышление",
+    "confidence": 0.75,
+    "description": "Линия головы средней глубины с изгибом может говорить о способности адаптировать мышление к различным ситуациям и находить нестандартные решения."
+  }
+]

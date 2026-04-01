@@ -1,0 +1,82 @@
+[
+  {
+    "id": "fate_01",
+    "conditions": { "lineType": "fate", "depth": "deep", "length": "long" },
+    "category": "career",
+    "trait": "Ясный жизненный путь",
+    "confidence": 0.84,
+    "description": "Глубокая длинная линия судьбы может указывать на сильную предопределённость и ясное понимание своего жизненного пути."
+  },
+  {
+    "id": "fate_02",
+    "conditions": { "lineType": "fate", "depth": "faint" },
+    "category": "career",
+    "trait": "Свобода выбора",
+    "confidence": 0.75,
+    "description": "Слабо выраженная линия судьбы может свидетельствовать о свободе выбора и жизни без жёстких рамок, с возможностью менять направление."
+  },
+  {
+    "id": "fate_03",
+    "conditions": { "lineType": "fate", "startPoint": "wrist" },
+    "category": "career",
+    "trait": "Раннее самоопределение",
+    "confidence": 0.80,
+    "description": "Линия судьбы, начинающаяся от запястья, может указывать на раннее самоопределение и чёткое понимание своего призвания с молодого возраста."
+  },
+  {
+    "id": "fate_04",
+    "conditions": { "lineType": "fate", "startPoint": "middle_palm" },
+    "category": "career",
+    "trait": "Поздний выбор карьеры",
+    "confidence": 0.78,
+    "description": "Линия судьбы, начинающаяся из середины ладони, может говорить о более позднем выборе карьерного пути и периоде поисков."
+  },
+  {
+    "id": "fate_05",
+    "conditions": { "lineType": "fate", "depth": "deep", "curvature": "straight" },
+    "category": "career",
+    "trait": "Целеустремлённость",
+    "confidence": 0.83,
+    "description": "Глубокая прямая линия судьбы может свидетельствовать о сильной целеустремлённости и последовательности в достижении целей."
+  },
+  {
+    "id": "fate_06",
+    "conditions": { "lineType": "fate", "endPoint": "saturn" },
+    "category": "career",
+    "trait": "Успех через труд",
+    "confidence": 0.81,
+    "description": "Линия судьбы, направленная к холму Сатурна, может указывать на достижение успеха через упорный труд и дисциплину."
+  },
+  {
+    "id": "fate_07",
+    "conditions": { "lineType": "fate", "endPoint": "jupiter" },
+    "category": "career",
+    "trait": "Лидерские амбиции",
+    "confidence": 0.80,
+    "description": "Линия судьбы, направленная к холму Юпитера, может говорить о лидерских амбициях и стремлении к руководящим позициям."
+  },
+  {
+    "id": "fate_08",
+    "conditions": { "lineType": "fate", "length": "short" },
+    "category": "career",
+    "trait": "Гибкость карьерного пути",
+    "confidence": 0.73,
+    "description": "Короткая линия судьбы может указывать на гибкость в выборе карьерного пути и склонность к смене направлений деятельности."
+  },
+  {
+    "id": "fate_09",
+    "conditions": { "lineType": "fate", "startPoint": "luna" },
+    "category": "career",
+    "trait": "Влияние окружения на карьеру",
+    "confidence": 0.76,
+    "description": "Линия судьбы, начинающаяся от холма Луны, может свидетельствовать о значительном влиянии окружающих людей на карьерный путь."
+  },
+  {
+    "id": "fate_10",
+    "conditions": { "lineType": "fate", "depth": "medium", "length": "medium" },
+    "category": "career",
+    "trait": "Умеренная определённость пути",
+    "confidence": 0.72,
+    "description": "Линия судьбы средней выраженности может указывать на баланс между следованием намеченному плану и готовностью к переменам."
+  }
+]

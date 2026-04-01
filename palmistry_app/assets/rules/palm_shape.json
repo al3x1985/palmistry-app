@@ -1,0 +1,82 @@
+[
+  {
+    "id": "palm_01",
+    "conditions": { "palmShape": "square" },
+    "category": "personality",
+    "trait": "Стихия Земли",
+    "confidence": 0.82,
+    "description": "Квадратная ладонь ассоциируется со стихией Земли: практичность, надёжность, трудолюбие и склонность к стабильности."
+  },
+  {
+    "id": "palm_02",
+    "conditions": { "palmShape": "rectangle" },
+    "category": "personality",
+    "trait": "Стихия Воздуха",
+    "confidence": 0.82,
+    "description": "Прямоугольная ладонь ассоциируется со стихией Воздуха: интеллектуальность, коммуникабельность и склонность к обмену идеями."
+  },
+  {
+    "id": "palm_03",
+    "conditions": { "palmShape": "spatulate" },
+    "category": "personality",
+    "trait": "Стихия Огня",
+    "confidence": 0.82,
+    "description": "Лопатообразная ладонь ассоциируется со стихией Огня: энергичность, лидерство, динамизм и склонность к активным действиям."
+  },
+  {
+    "id": "palm_04",
+    "conditions": { "palmShape": "conic" },
+    "category": "personality",
+    "trait": "Стихия Воды",
+    "confidence": 0.82,
+    "description": "Коническая ладонь ассоциируется со стихией Воды: эмоциональность, интуиция, чувствительность и склонность к эмпатии."
+  },
+  {
+    "id": "palm_05",
+    "conditions": { "palmShape": "square", "fingerLength": "short" },
+    "category": "personality",
+    "trait": "Практик-реалист",
+    "confidence": 0.79,
+    "description": "Квадратная ладонь с короткими пальцами может указывать на практичного реалиста, предпочитающего конкретные действия теоретическим рассуждениям."
+  },
+  {
+    "id": "palm_06",
+    "conditions": { "palmShape": "square", "fingerLength": "long" },
+    "category": "personality",
+    "trait": "Методичный аналитик",
+    "confidence": 0.78,
+    "description": "Квадратная ладонь с длинными пальцами может свидетельствовать о методичном подходе к делам и склонности к детальному анализу."
+  },
+  {
+    "id": "palm_07",
+    "conditions": { "palmShape": "rectangle", "fingerLength": "long" },
+    "category": "personality",
+    "trait": "Интеллектуал-коммуникатор",
+    "confidence": 0.80,
+    "description": "Прямоугольная ладонь с длинными пальцами может указывать на выраженные интеллектуальные способности и талант к коммуникации."
+  },
+  {
+    "id": "palm_08",
+    "conditions": { "palmShape": "spatulate", "fingerLength": "short" },
+    "category": "personality",
+    "trait": "Энергичный деятель",
+    "confidence": 0.78,
+    "description": "Лопатообразная ладонь с короткими пальцами может говорить о кипучей энергии, нетерпеливости и стремлении к быстрым результатам."
+  },
+  {
+    "id": "palm_09",
+    "conditions": { "palmShape": "conic", "fingerLength": "long" },
+    "category": "personality",
+    "trait": "Утончённая натура",
+    "confidence": 0.77,
+    "description": "Коническая ладонь с длинными пальцами может указывать на утончённую натуру с развитым чувством прекрасного и склонностью к искусству."
+  },
+  {
+    "id": "palm_10",
+    "conditions": { "palmShape": "rectangle", "fingerLength": "short" },
+    "category": "personality",
+    "trait": "Быстрый ум",
+    "confidence": 0.76,
+    "description": "Прямоугольная ладонь с короткими пальцами может свидетельствовать о быстром уме, находчивости и способности мгновенно оценивать ситуацию."
+  }
+]
