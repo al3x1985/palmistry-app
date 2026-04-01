@@ -30,17 +30,17 @@ def _horizontal_span(points: np.ndarray) -> float:
 
 
 def _is_horizontal(points: np.ndarray) -> bool:
-    """True when the contour is wider than it is tall (ratio >= 2:1)."""
+    """True when the contour spans more horizontally than vertically."""
     v_span = _vertical_span(points)
     h_span = _horizontal_span(points)
-    return h_span > 0 and (v_span / h_span) < 0.5
+    return h_span > 0 and h_span > v_span * 0.8  # relaxed from 2:1
 
 
 def _is_vertical(points: np.ndarray) -> bool:
-    """True when the contour is taller than it is wide (ratio >= 2:1)."""
+    """True when the contour spans more vertically than horizontally."""
     v_span = _vertical_span(points)
     h_span = _horizontal_span(points)
-    return v_span > 0 and (h_span / v_span) < 0.5
+    return v_span > 0 and v_span > h_span * 1.2
 
 
 # ---------------------------------------------------------------------------
@@ -108,18 +108,19 @@ def _compute_zones(
     palm_width = max(abs(x17 - x5), 1.0)
     palm_centre_x = (x5 + x17) / 2.0
 
+    # Wider zones — real palm lines vary a lot in position
     heart_top    = mcp_y_mean
-    heart_bottom = mcp_y_mean + 0.15 * palm_height
-    head_top     = heart_bottom
-    head_bottom  = heart_bottom + 0.25 * palm_height
+    heart_bottom = mcp_y_mean + 0.25 * palm_height  # was 0.15
+    head_top     = mcp_y_mean + 0.15 * palm_height
+    head_bottom  = mcp_y_mean + 0.50 * palm_height  # was 0.40
 
-    # Life line starts in thumb-index web: landmark 2 (thumb MCP)
+    # Life line: left side of palm, any significant vertical curve
     x2, _ = _lm_to_roi(landmarks[2], original_size, roi_offset)
-    life_x_threshold = x2 + 0.10 * palm_width   # just right of thumb base
-    life_min_vspan   = 0.20 * palm_height
+    life_x_threshold = x2 + 0.25 * palm_width  # was 0.10 — more generous
+    life_min_vspan   = 0.15 * palm_height  # was 0.20
 
-    fate_x_lo = palm_centre_x - 0.15 * palm_width
-    fate_x_hi = palm_centre_x + 0.15 * palm_width
+    fate_x_lo = palm_centre_x - 0.25 * palm_width  # was 0.15
+    fate_x_hi = palm_centre_x + 0.25 * palm_width
 
     return {
         "heart_top":          heart_top,
