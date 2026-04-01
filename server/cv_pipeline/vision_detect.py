@@ -9,79 +9,85 @@ def detect_lines_with_vision(image_base64: str, landmarks: list) -> list[dict]:
     """Send palm photo to Claude Vision to detect palm lines with precise coordinates."""
     client = anthropic.Anthropic(api_key=os.environ.get("CLAUDE_API_KEY", ""))
 
-    # Build landmark reference so Claude can anchor coordinates
-    landmark_ref = ""
-    if landmarks:
-        lm_names = [
-            "wrist", "thumb_cmc", "thumb_mcp", "thumb_ip", "thumb_tip",
-            "index_mcp", "index_pip", "index_dip", "index_tip",
-            "middle_mcp", "middle_pip", "middle_dip", "middle_tip",
-            "ring_mcp", "ring_pip", "ring_dip", "ring_tip",
-            "pinky_mcp", "pinky_pip", "pinky_dip", "pinky_tip",
-        ]
-        landmark_ref = "\nDetected hand landmarks (normalized 0-1 coords, x=left-right, y=top-bottom):\n"
-        for i, lm in enumerate(landmarks):
-            if i < len(lm_names):
-                landmark_ref += f"  {lm_names[i]}: x={lm.x:.3f}, y={lm.y:.3f}\n"
+    # Compute anchor zones from landmarks to constrain Claude's output
+    anchor_info = ""
+    if landmarks and len(landmarks) >= 21:
+        # Key Y positions
+        mcp_y = (landmarks[5].y + landmarks[9].y + landmarks[13].y + landmarks[17].y) / 4
+        wrist_y = landmarks[0].y
+        palm_height = wrist_y - mcp_y
 
-        # Add explicit reference points
-        landmark_ref += "\nKey reference positions:\n"
-        landmark_ref += f"  Finger bases (MCP row): index={landmarks[5].y:.3f}, middle={landmarks[9].y:.3f}, ring={landmarks[13].y:.3f}, pinky={landmarks[17].y:.3f}\n"
-        landmark_ref += f"  Wrist: y={landmarks[0].y:.3f}\n"
-        landmark_ref += f"  Palm center: approximately x={0.5*(landmarks[5].x + landmarks[17].x):.3f}, y={0.5*(landmarks[9].y + landmarks[0].y):.3f}\n"
+        # Key X positions
+        thumb_x = landmarks[2].x
+        index_x = landmarks[5].x
+        pinky_x = landmarks[17].x
+        center_x = (index_x + pinky_x) / 2
 
-    prompt = f"""You are analyzing a photo of a human palm to detect palm lines. Return precise coordinates that trace EXACTLY along the visible skin creases/folds.
+        # Heart line zone: 10-25% below MCP row
+        heart_y_min = mcp_y + 0.10 * palm_height
+        heart_y_max = mcp_y + 0.25 * palm_height
 
-CRITICAL INSTRUCTIONS:
-- The coordinates are normalized 0-1 relative to the FULL IMAGE (not just the palm).
-- x=0 is the LEFT edge of the image, x=1 is the RIGHT edge.
-- y=0 is the TOP of the image, y=1 is the BOTTOM.
-- Each control point MUST lie exactly ON a visible crease/fold line in the palm skin. Do NOT approximate or guess — trace the actual visible line.
-- Palm lines are the deep visible creases/folds in the palm skin, NOT the finger joints.
+        # Head line zone: 25-45% below MCP row
+        head_y_min = mcp_y + 0.25 * palm_height
+        head_y_max = mcp_y + 0.45 * palm_height
 
-{landmark_ref}
+        # Life line: starts near index_mcp, curves to left
+        life_start_x = (thumb_x + index_x) / 2
+        life_start_y = head_y_min
 
-LINES TO DETECT (trace the actual visible crease):
+        anchor_info = f"""
+PRECISE COORDINATE CONSTRAINTS (derived from hand landmarks):
 
-1. HEART LINE: The uppermost major horizontal crease across the palm.
-   - It runs BELOW the finger base joints (below the MCP row), NOT through the fingers.
-   - Typically starts near the pinky side and curves across toward the index finger.
-   - It should be in the zone between the MCP row and the middle of the palm.
+Heart line Y range: {heart_y_min:.3f} to {heart_y_max:.3f}
+  - Must start near pinky side: x ≈ {pinky_x:.3f}
+  - Must end near index/middle area: x ≈ {index_x:.3f} to {landmarks[9].x:.3f}
+  - ALL control points must have y between {heart_y_min:.3f} and {heart_y_max:.3f}
 
-2. HEAD LINE: The second major horizontal crease, below the heart line.
-   - Starts near the thumb/index web and runs across the palm.
-   - Often starts at or near the beginning of the life line.
+Head line Y range: {head_y_min:.3f} to {head_y_max:.3f}
+  - Must start near thumb-index web: x ≈ {life_start_x:.3f}, y ≈ {head_y_min:.3f}
+  - Runs across to the right, may slope slightly downward
+  - ALL control points must have y between {head_y_min:.3f} and {head_y_max:.3f}
 
-3. LIFE LINE: The curved line that arcs around the thumb base.
-   - Starts between the thumb and index finger (near the web).
-   - Curves downward and around the fleshy thumb mount (thenar eminence).
-   - Does NOT go straight down — it arcs to the LEFT.
+Life line:
+  - Must start near thumb-index web: x ≈ {life_start_x:.3f}, y ≈ {life_start_y:.3f}
+  - Curves DOWN and LEFT around the thumb mount
+  - End point should be near: x ≈ {thumb_x:.3f} to {life_start_x:.3f}, y ≈ {wrist_y - 0.1 * palm_height:.3f}
+  - x values should DECREASE then slightly increase (arc shape)
 
-4. FATE LINE (if visible): A vertical or near-vertical crease running up the center of the palm.
-   - Runs from the lower palm up toward the middle finger.
-   - May not be present on all hands — only include if clearly visible.
+Fate line (if visible):
+  - Runs vertically near palm center: x ≈ {center_x:.3f} (±0.05)
+  - From lower palm (y ≈ {mcp_y + 0.6 * palm_height:.3f}) up to mid-palm (y ≈ {head_y_min:.3f})
 
-For each line provide 5-7 control points tracing the crease precisely.
+Palm boundaries: left edge x ≈ {min(thumb_x, index_x) - 0.02:.3f}, right edge x ≈ {pinky_x + 0.02:.3f}
+Wrist: y ≈ {wrist_y:.3f}
+Finger bases: y ≈ {mcp_y:.3f}
+"""
 
-Also determine for each line:
+    prompt = f"""Analyze this palm photo. Trace the visible skin creases (palm lines) with precise normalized coordinates (0-1 of full image, x=left-right, y=top-bottom).
+
+RULES:
+- Each point must lie ON a visible crease in the skin
+- Follow the coordinate constraints below — they are computed from detected hand position
+- Provide 5-7 points per line, evenly spaced along the crease
+- Only include lines that are clearly visible
+{anchor_info}
+LINES:
+1. HEART LINE — uppermost horizontal crease, below finger bases
+2. HEAD LINE — second horizontal crease, below heart line
+3. LIFE LINE — curved arc around thumb mount (thenar eminence)
+4. FATE LINE — vertical crease up the center (only if visible)
+
+For each line:
+- line_type: "heart" / "head" / "life" / "fate"
+- control_points: [{{"x": float, "y": float}}, ...] — 5-7 points ON the crease
 - length: "short" / "medium" / "long"
-- depth: "deep" (dark, clearly visible) / "medium" / "faint"
+- depth: "deep" / "medium" / "faint"
 - curvature: "straight" / "curved" / "steep"
-- start_point: nearest mount ("jupiter"=under index, "saturn"=under middle, "apollo"=under ring, "mercury"=under pinky, "wrist", "edge")
-- end_point: same options
+- start_point: "jupiter" / "saturn" / "apollo" / "mercury" / "wrist" / "edge"
+- end_point: same
 
-Return ONLY a valid JSON array, no markdown fences, no explanations:
-[
-  {{
-    "line_type": "heart",
-    "control_points": [{{"x": 0.3, "y": 0.42}}, ...],
-    "length": "long",
-    "depth": "deep",
-    "curvature": "curved",
-    "start_point": "mercury",
-    "end_point": "jupiter"
-  }}
-]"""
+Return ONLY valid JSON array:
+[{{"line_type":"heart","control_points":[{{"x":0.7,"y":0.45}},...], "length":"long","depth":"deep","curvature":"curved","start_point":"mercury","end_point":"jupiter"}}]"""
 
     response = client.messages.create(
         model="claude-sonnet-4-20250514",
