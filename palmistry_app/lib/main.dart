@@ -7,13 +7,16 @@ import 'app/di.dart';
 import 'app/router.dart';
 import 'core/services/rule_engine.dart';
 import 'features/onboarding/ui/onboarding_screen.dart';
+import 'firebase_options.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Firebase init — gracefully handles unconfigured projects (e.g. CI)
   try {
-    await Firebase.initializeApp();
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
   } catch (_) {
     // Firebase not configured — analytics will be silently disabled.
   }

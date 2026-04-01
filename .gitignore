@@ -2,3 +2,6 @@
 __pycache__/
 *.pyc
 server/.venv/
+palmistry_app/firebase/functions/node_modules/
+palmistry_app/firebase/functions/lib/
+palmistry_app/android/app/google-services.json

@@ -1,0 +1,25 @@
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "palmistry-app-mvp",
+          "appId": "1:626948907098:android:ab42c1c413e6fc88e47863",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "palmistry-app-mvp",
+          "configurations": {
+            "android": "1:626948907098:android:ab42c1c413e6fc88e47863"
+          }
+        }
+      }
+    }
+  },
+  "functions": {
+    "source": "firebase/functions",
+    "runtime": "nodejs20"
+  }
+}
