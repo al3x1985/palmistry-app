@@ -1,0 +1,22 @@
+name: Flutter CI
+on:
+  push:
+    branches: [master]
+    paths: ['palmistry_app/**']
+  pull_request:
+    paths: ['palmistry_app/**']
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: palmistry_app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.41.6'
+          channel: stable
+      - run: flutter pub get
+      - run: flutter analyze --no-fatal-infos --no-fatal-warnings
+      - run: flutter test
