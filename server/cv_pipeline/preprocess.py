@@ -14,7 +14,7 @@ _ROI_PADDING = 20
 
 class PreprocessResult(TypedDict):
     gray: np.ndarray       # 2D grayscale ROI
-    edges: np.ndarray      # 2D uint8 combined edge map (Canny + adaptive threshold)
+    edges: np.ndarray      # 2D uint8 edge map (Canny + morphological cleanup)
     roi_offset: tuple[int, int]   # (x, y) pixel offset of the ROI in the original image
     roi_size: tuple[int, int]     # (width, height) of the ROI
     original_size: tuple[int, int]  # (width, height) of the original image
@@ -61,8 +61,9 @@ def preprocess_palm(image: np.ndarray, landmarks: list[Landmark]) -> PreprocessR
     2. Crop the ROI with padding.
     3. Convert to grayscale.
     4. Apply CLAHE for contrast enhancement.
-    5. Apply Gaussian blur to reduce noise.
-    6. Compute edges via Canny + adaptive threshold and combine them.
+    5. Apply bilateral filter to smooth skin texture while preserving edges.
+    6. Compute strong edges via Canny (higher thresholds than before).
+    7. Morphological close to connect nearby segments, then open to remove noise.
 
     Parameters
     ----------
@@ -104,24 +105,18 @@ def preprocess_palm(image: np.ndarray, landmarks: list[Landmark]) -> PreprocessR
     clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
     enhanced = clahe.apply(gray)
 
-    # --- 5. Gaussian blur ---
-    blurred = cv2.GaussianBlur(enhanced, (5, 5), sigmaX=0)
+    # --- 5. Bilateral filter — smooths skin texture while preserving real edges ---
+    blurred = cv2.bilateralFilter(enhanced, d=9, sigmaColor=75, sigmaSpace=75)
 
-    # --- 6. Canny edge detection ---
-    canny_edges = cv2.Canny(blurred, threshold1=30, threshold2=80)
+    # --- 6. Canny edge detection (higher thresholds → only strong edges) ---
+    canny_edges = cv2.Canny(blurred, threshold1=50, threshold2=150)
 
-    # --- Adaptive threshold for soft/faint lines ---
-    adaptive = cv2.adaptiveThreshold(
-        blurred,
-        maxValue=255,
-        adaptiveMethod=cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
-        thresholdType=cv2.THRESH_BINARY_INV,
-        blockSize=11,
-        C=2,
-    )
-
-    # --- Combine: union of both edge maps ---
-    edges = cv2.bitwise_or(canny_edges, adaptive)
+    # --- 7. Morphological cleanup ---
+    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
+    # Close: connect nearby line segments
+    edges = cv2.morphologyEx(canny_edges, cv2.MORPH_CLOSE, kernel, iterations=2)
+    # Open: remove small isolated noise dots
+    edges = cv2.morphologyEx(edges, cv2.MORPH_OPEN, kernel, iterations=1)
 
     return PreprocessResult(
         gray=gray,

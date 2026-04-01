@@ -67,11 +67,17 @@ def analyze_palm(request: AnalyzeRequest) -> PalmAnalysisResponse:
     roi_size   = prep["roi_size"]
     orig_size  = prep["original_size"]
 
-    # 3. Extract line candidates
-    candidates = extract_line_candidates(edges)
+    # 3. Extract line candidates (pass geometry for stricter filtering)
+    candidates = extract_line_candidates(
+        edges,
+        roi_size=roi_size,
+        landmarks=landmarks,
+        original_size=orig_size,
+        roi_offset=roi_offset,
+    )
 
-    # 4. Classify
-    classified = classify_lines(candidates, landmarks, roi_size, roi_offset)
+    # 4. Classify (pass original_size so landmarks can be projected to ROI coords)
+    classified = classify_lines(candidates, landmarks, roi_size, roi_offset, original_size=orig_size)
 
     # 5-7. Bezier fit + normalize + characteristics
     palm_width = _palm_width_from_landmarks(landmarks)

@@ -14,6 +14,11 @@ from cv_pipeline.models import Landmark
 ROI_SIZE = (400, 500)   # (width, height)
 ROI_OFFSET = (50, 30)   # (x, y) offset in original image
 
+# original_size fallback used by classify_lines when not supplied:
+# (roi_w + off_x, roi_h + off_y) = (450, 530)
+_ORIG_W = ROI_SIZE[0] + ROI_OFFSET[0]   # 450
+_ORIG_H = ROI_SIZE[1] + ROI_OFFSET[1]   # 530
+
 
 def make_landmarks() -> list[Landmark]:
     """21 generic landmarks spread across a normalized palm area."""
@@ -28,31 +33,54 @@ def make_landmarks() -> list[Landmark]:
     return [Landmark(x=x, y=y) for x, y in raw]
 
 
-def horizontal_line_at_y(y_frac: float, roi_size=ROI_SIZE) -> np.ndarray:
-    """Create a horizontal Nx2 array at a given fractional ROI y position."""
-    roi_w, roi_h = roi_size
-    y = int(y_frac * roi_h)
+# ---------------------------------------------------------------------------
+# Zone pre-computation for make_landmarks() + ROI_SIZE + ROI_OFFSET
+#
+# original_size fallback = (450, 530)
+# MCP landmarks (5,9,13,17) projected to ROI:
+#   lm5:  x=0.38*450-50=121,  y=0.55*530-30=261.5
+#   lm9:  x=0.50*450-50=175,  y=0.52*530-30=245.6
+#   lm13: x=0.62*450-50=229,  y=0.54*530-30=256.2
+#   lm17: x=0.74*450-50=283,  y=0.60*530-30=288.0
+#   mcp_y_mean ≈ 262.8
+# Wrist lm0: y=0.90*530-30=447  → palm_height ≈ 184.2
+# heart_top ≈ 262.8  heart_bottom ≈ 290.4
+# head_top  ≈ 290.4  head_bottom  ≈ 336.5
+# palm_width (x17-x5) ≈ 162  centre_x ≈ 202
+# fate_x: [177.7, 226.3]  → x_frac [0.44, 0.57]
+# life_x_threshold: lm2 x=0.25*450-50=62.5  → 62.5+0.10*162≈78.7  x_frac≈0.197
+# ---------------------------------------------------------------------------
+
+# Pixel positions inside each zone (used by tests below)
+_HEART_Y_PX  = 275   # inside [262.8, 290.4]
+_HEAD_Y_PX   = 310   # inside [290.4, 336.5]
+_FATE_X_PX   = 202   # centre of fate band
+_LIFE_X_MAX  = 75    # < life_x_threshold ≈ 78.7
+
+
+def horizontal_line_at_ypx(y_px: int, roi_size=ROI_SIZE) -> np.ndarray:
+    """Create a horizontal Nx2 array at a given ROI y pixel position."""
+    roi_w, _ = roi_size
     xs = np.linspace(20, roi_w - 20, 60, dtype=np.int32)
-    ys = np.full(60, y, dtype=np.int32)
+    ys = np.full(60, y_px, dtype=np.int32)
     return np.stack([xs, ys], axis=1)
 
 
-def vertical_line_at_x(x_frac: float, roi_size=ROI_SIZE) -> np.ndarray:
-    """Create a vertical Nx2 array at a given fractional ROI x position."""
-    roi_w, roi_h = roi_size
-    x = int(x_frac * roi_w)
+def vertical_line_at_xpx(x_px: int, roi_size=ROI_SIZE) -> np.ndarray:
+    """Create a vertical Nx2 array at a given ROI x pixel position."""
+    _, roi_h = roi_size
     ys = np.linspace(int(0.1 * roi_h), int(0.9 * roi_h), 60, dtype=np.int32)
-    xs = np.full(60, x, dtype=np.int32)
+    xs = np.full(60, x_px, dtype=np.int32)
     return np.stack([xs, ys], axis=1)
 
 
 def curved_left_line(roi_size=ROI_SIZE) -> np.ndarray:
     """Create a roughly vertical curve on the left/thumb side of the ROI."""
     roi_w, roi_h = roi_size
-    # Arc starting near top-left, curving down
+    # x stays well below the life_x_threshold (~78.7 px)
     t = np.linspace(0, 1, 60)
-    xs = (0.15 * roi_w + 0.05 * roi_w * np.sin(t * np.pi)).astype(np.int32)
-    ys = (0.2 * roi_h + t * 0.65 * roi_h).astype(np.int32)
+    xs = (45 + 20 * np.sin(t * np.pi)).astype(np.int32)   # max ~65px < 78.7
+    ys = (int(0.2 * roi_h) + t * 0.65 * roi_h).astype(np.int32)
     return np.stack([xs, ys], axis=1)
 
 
@@ -62,16 +90,16 @@ def curved_left_line(roi_size=ROI_SIZE) -> np.ndarray:
 
 class TestClassifyLines:
     def test_heart_line_detected(self):
-        """A horizontal line at y~0.45 of ROI should be classified as heart."""
-        heart_pts = horizontal_line_at_y(0.45)
+        """A horizontal line in the heart zone (just below MCPs) → heart."""
+        heart_pts = horizontal_line_at_ypx(_HEART_Y_PX)
         landmarks = make_landmarks()
         results = classify_lines([heart_pts], landmarks, ROI_SIZE, ROI_OFFSET)
         types = [r["line_type"] for r in results]
         assert "heart" in types
 
     def test_head_line_detected(self):
-        """A horizontal line at y~0.55 of ROI should be classified as head."""
-        head_pts = horizontal_line_at_y(0.55)
+        """A horizontal line in the head zone → head."""
+        head_pts = horizontal_line_at_ypx(_HEAD_Y_PX)
         landmarks = make_landmarks()
         results = classify_lines([head_pts], landmarks, ROI_SIZE, ROI_OFFSET)
         types = [r["line_type"] for r in results]
@@ -86,8 +114,8 @@ class TestClassifyLines:
         assert "life" in types
 
     def test_fate_line_detected(self):
-        """A vertical line at center x~0.50 should be classified as fate."""
-        fate_pts = vertical_line_at_x(0.50)
+        """A vertical line in the centre fate band → fate."""
+        fate_pts = vertical_line_at_xpx(_FATE_X_PX)
         landmarks = make_landmarks()
         results = classify_lines([fate_pts], landmarks, ROI_SIZE, ROI_OFFSET)
         types = [r["line_type"] for r in results]
@@ -95,7 +123,7 @@ class TestClassifyLines:
 
     def test_each_type_assigned_at_most_once(self):
         """Providing two identical heart-line candidates → only one heart result."""
-        heart_pts = horizontal_line_at_y(0.45)
+        heart_pts = horizontal_line_at_ypx(_HEART_Y_PX)
         landmarks = make_landmarks()
         results = classify_lines([heart_pts, heart_pts.copy()], landmarks, ROI_SIZE, ROI_OFFSET)
         heart_count = sum(1 for r in results if r["line_type"] == "heart")
@@ -103,7 +131,7 @@ class TestClassifyLines:
 
     def test_result_contains_points_key(self):
         """Each classification result must have 'line_type' and 'points' keys."""
-        pts = horizontal_line_at_y(0.45)
+        pts = horizontal_line_at_ypx(_HEART_Y_PX)
         results = classify_lines([pts], make_landmarks(), ROI_SIZE, ROI_OFFSET)
         for r in results:
             assert "line_type" in r
@@ -127,9 +155,9 @@ class TestClassifyLines:
 
     def test_multiple_lines_classified_together(self):
         """Passing heart + head + fate at once → all three classified."""
-        heart_pts = horizontal_line_at_y(0.40)
-        head_pts = horizontal_line_at_y(0.57)
-        fate_pts = vertical_line_at_x(0.50)
+        heart_pts = horizontal_line_at_ypx(_HEART_Y_PX)
+        head_pts  = horizontal_line_at_ypx(_HEAD_Y_PX)
+        fate_pts  = vertical_line_at_xpx(_FATE_X_PX)
         results = classify_lines(
             [heart_pts, head_pts, fate_pts], make_landmarks(), ROI_SIZE, ROI_OFFSET
         )
