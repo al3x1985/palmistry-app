@@ -8,36 +8,19 @@ import numpy as np
 
 from cv_pipeline.models import Landmark
 
-# Padding added around the palm bounding box when cropping the ROI (pixels)
 _ROI_PADDING = 20
 
 
 class PreprocessResult(TypedDict):
-    gray: np.ndarray       # 2D grayscale ROI
-    edges: np.ndarray      # 2D uint8 edge map (Canny + morphological cleanup)
-    roi_offset: tuple[int, int]   # (x, y) pixel offset of the ROI in the original image
-    roi_size: tuple[int, int]     # (width, height) of the ROI
-    original_size: tuple[int, int]  # (width, height) of the original image
+    gray: np.ndarray
+    edges: np.ndarray
+    roi_offset: tuple[int, int]
+    roi_size: tuple[int, int]
+    original_size: tuple[int, int]
 
 
 def decode_image(base64_str: str) -> np.ndarray:
-    """Decode a base64-encoded image string to a BGR numpy array.
-
-    Parameters
-    ----------
-    base64_str:
-        Base64-encoded image bytes (JPEG or PNG).
-
-    Returns
-    -------
-    np.ndarray
-        BGR image with shape (H, W, 3).
-
-    Raises
-    ------
-    ValueError
-        If the string cannot be decoded or the result is not a valid image.
-    """
+    """Decode a base64-encoded image string to a BGR numpy array."""
     try:
         img_bytes = base64.b64decode(base64_str, validate=True)
     except Exception as exc:
@@ -47,41 +30,65 @@ def decode_image(base64_str: str) -> np.ndarray:
     img = cv2.imdecode(arr, cv2.IMREAD_COLOR)
 
     if img is None:
-        raise ValueError("Could not decode image from base64 data (unsupported format or corrupt bytes).")
+        raise ValueError("Could not decode image from base64 data.")
 
     return img
+
+
+def _build_hand_mask(landmarks: list[Landmark], roi_w: int, roi_h: int,
+                     roi_offset: tuple[int, int], img_w: int, img_h: int) -> np.ndarray:
+    """Build a binary mask of the hand interior from landmarks.
+
+    Uses convex hull of key palm landmarks to create a mask that
+    excludes background, fingers (mostly), and non-palm areas.
+    """
+    ox, oy = roi_offset
+
+    # Use palm + finger base landmarks for convex hull
+    palm_indices = [0, 1, 2, 5, 9, 13, 17]
+
+    pts = []
+    for idx in palm_indices:
+        if idx < len(landmarks):
+            lm = landmarks[idx]
+            # Convert from normalized (0-1 of full image) to ROI pixel coords
+            full_px = int(lm.x * img_w)
+            full_py = int(lm.y * img_h)
+            roi_px = full_px - ox
+            roi_py = full_py - oy
+            roi_px = max(0, min(roi_w - 1, roi_px))
+            roi_py = max(0, min(roi_h - 1, roi_py))
+            pts.append([roi_px, roi_py])
+
+    if len(pts) < 3:
+        return np.ones((roi_h, roi_w), dtype=np.uint8) * 255
+
+    hull = cv2.convexHull(np.array(pts, dtype=np.int32))
+    mask = np.zeros((roi_h, roi_w), dtype=np.uint8)
+    cv2.fillConvexPoly(mask, hull, 255)
+
+    # Dilate to include edges at palm boundary
+    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (20, 20))
+    mask = cv2.dilate(mask, kernel, iterations=1)
+
+    return mask
 
 
 def preprocess_palm(image: np.ndarray, landmarks: list[Landmark]) -> PreprocessResult:
     """Preprocess a palm image for line detection.
 
-    Steps
-    -----
-    1. Compute a bounding-box ROI from the landmark positions.
-    2. Crop the ROI with padding.
-    3. Convert to grayscale.
-    4. Apply CLAHE for contrast enhancement.
-    5. Apply bilateral filter to smooth skin texture while preserving edges.
-    6. Compute strong edges via Canny (higher thresholds than before).
-    7. Morphological close to connect nearby segments, then open to remove noise.
-
-    Parameters
-    ----------
-    image:
-        BGR image as returned by :func:`decode_image`.
-    landmarks:
-        Exactly 21 :class:`~cv_pipeline.models.Landmark` objects with
-        normalised (0-1) coordinates.
-
-    Returns
-    -------
-    PreprocessResult
-        Dictionary with keys ``gray``, ``edges``, ``roi_offset``,
-        ``roi_size``, and ``original_size``.
+    Pipeline:
+    1. ROI crop from landmarks
+    2. Build hand mask (convex hull of palm landmarks)
+    3. Grayscale → CLAHE → bilateral filter
+    4. Apply hand mask (zero out background)
+    5. Canny edge detection with moderate thresholds
+    6. Mask edges (only keep edges inside hand)
+    7. Morphological cleanup
     """
     h, w = image.shape[:2]
 
-    # --- 1. ROI from landmarks ---
+    # 1. ROI from landmarks
     xs = [int(lm.x * w) for lm in landmarks]
     ys = [int(lm.y * h) for lm in landmarks]
 
@@ -95,27 +102,39 @@ def preprocess_palm(image: np.ndarray, landmarks: list[Landmark]) -> PreprocessR
     roi_h = y_max - y_min
     roi_size: tuple[int, int] = (roi_w, roi_h)
 
-    # --- 2. Crop ---
+    # 2. Crop
     roi_bgr = image[y_min:y_max, x_min:x_max]
 
-    # --- 3. Grayscale ---
+    # 3. Grayscale
     gray = cv2.cvtColor(roi_bgr, cv2.COLOR_BGR2GRAY)
 
-    # --- 4. CLAHE ---
-    clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+    # 4. CLAHE for contrast
+    clahe = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(8, 8))
     enhanced = clahe.apply(gray)
 
-    # --- 5. Bilateral filter — smooths skin texture while preserving real edges ---
-    blurred = cv2.bilateralFilter(enhanced, d=9, sigmaColor=75, sigmaSpace=75)
+    # 5. Bilateral filter — smooths skin texture, preserves line edges
+    blurred = cv2.bilateralFilter(enhanced, d=9, sigmaColor=50, sigmaSpace=50)
 
-    # --- 6. Canny edge detection (higher thresholds → only strong edges) ---
-    canny_edges = cv2.Canny(blurred, threshold1=50, threshold2=150)
+    # 6. Build hand mask from landmarks
+    hand_mask = _build_hand_mask(landmarks, roi_w, roi_h, roi_offset, w, h)
 
-    # --- 7. Morphological cleanup ---
+    # 7. Canny with moderate thresholds (not too strict, not too loose)
+    # Use median of pixel values to auto-tune thresholds
+    median_val = np.median(blurred[hand_mask > 0]) if np.any(hand_mask > 0) else 128
+    lower = int(max(0, 0.33 * median_val))
+    upper = int(min(255, 1.0 * median_val))
+    # Ensure minimum gap
+    lower = max(20, lower)
+    upper = max(lower + 30, upper)
+
+    canny_edges = cv2.Canny(blurred, threshold1=lower, threshold2=upper)
+
+    # 8. Apply hand mask — remove all edges outside the palm
+    edges = cv2.bitwise_and(canny_edges, hand_mask)
+
+    # 9. Morphological cleanup
     kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
-    # Close: connect nearby line segments
-    edges = cv2.morphologyEx(canny_edges, cv2.MORPH_CLOSE, kernel, iterations=2)
-    # Open: remove small isolated noise dots
+    edges = cv2.morphologyEx(edges, cv2.MORPH_CLOSE, kernel, iterations=2)
     edges = cv2.morphologyEx(edges, cv2.MORPH_OPEN, kernel, iterations=1)
 
     return PreprocessResult(
