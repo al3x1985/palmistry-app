@@ -24,21 +24,26 @@ class PalmLineData {
   });
 
   factory PalmLineData.fromJson(Map<String, dynamic> json) {
-    final rawPoints = json['controlPoints'] as List<dynamic>;
+    // Server uses snake_case (control_points, line_type, start_point, end_point)
+    final rawPoints = (json['control_points'] ?? json['controlPoints']) as List<dynamic>;
     final controlPoints = rawPoints.map((p) {
       final point = p as Map<String, dynamic>;
       return (x: (point['x'] as num).toDouble(), y: (point['y'] as num).toDouble());
     }).toList();
 
+    final typeStr = (json['line_type'] ?? json['type']) as String;
+    final startPt = (json['start_point'] ?? json['startPoint']) as String;
+    final endPt = (json['end_point'] ?? json['endPoint']) as String;
+
     return PalmLineData(
-      type: LineType.values.byName(json['type'] as String),
+      type: LineType.values.byName(typeStr),
       controlPoints: controlPoints,
       length: (json['length'] as num).toDouble(),
       depth: LineDepth.values.byName(json['depth'] as String),
       curvature: LineCurvature.values.byName(json['curvature'] as String),
-      startPoint: json['startPoint'] as String,
-      endPoint: json['endPoint'] as String,
-      isUserEdited: json['isUserEdited'] as bool? ?? false,
+      startPoint: startPt,
+      endPoint: endPt,
+      isUserEdited: (json['is_user_edited'] ?? json['isUserEdited']) as bool? ?? false,
     );
   }
 

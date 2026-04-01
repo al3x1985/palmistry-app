@@ -16,20 +16,24 @@ class ScanResult {
   });
 
   factory ScanResult.fromJson(Map<String, dynamic> json) {
+    // Server uses snake_case, client uses camelCase — handle both
     final rawProportions =
-        json['fingerProportions'] as Map<String, dynamic>? ?? {};
+        (json['finger_proportions'] ?? json['fingerProportions']) as Map<String, dynamic>? ?? {};
     final fingerProportions = rawProportions.map(
       (k, v) => MapEntry(k, (v as num).toDouble()),
     );
 
-    final rawLines = json['lines'] as List<dynamic>? ?? [];
+    final rawLines = (json['lines'] as List<dynamic>?) ?? [];
     final lines = rawLines
         .map((l) => PalmLineData.fromJson(l as Map<String, dynamic>))
         .toList();
 
+    final shapeStr = (json['palm_shape'] ?? json['palmShape']) as String;
+    final widthRatio = (json['palm_width_ratio'] ?? json['palmWidthRatio']) as num;
+
     return ScanResult(
-      palmShape: PalmShape.values.byName(json['palmShape'] as String),
-      palmWidthRatio: (json['palmWidthRatio'] as num).toDouble(),
+      palmShape: PalmShape.values.byName(shapeStr),
+      palmWidthRatio: widthRatio.toDouble(),
       fingerProportions: fingerProportions,
       lines: lines,
     );
