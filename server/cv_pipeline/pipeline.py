@@ -52,6 +52,10 @@ def analyze_palm(request: AnalyzeRequest) -> PalmAnalysisResponse:
     # 4. Detect lines with Claude Vision
     raw_lines = detect_lines_with_vision(request.image_base64, landmarks)
 
+    # 4b. Refine: snap Vision coordinates to actual skin creases via OpenCV
+    from cv_pipeline.line_refine import refine_lines
+    raw_lines = refine_lines(image, raw_lines)
+
     # 5. Convert to DetectedLine objects
     detected_lines: list[DetectedLine] = []
     for line_data in raw_lines:
