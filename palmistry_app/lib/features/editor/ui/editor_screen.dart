@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:math' as math;
+import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -144,11 +145,10 @@ class _LineEditorCanvas extends StatefulWidget {
 }
 
 class _LineEditorCanvasState extends State<_LineEditorCanvas> {
-  // Track which control point is being dragged
   int? _draggingLineIndex;
   int? _draggingPointIndex;
+  Size? _imageSize; // actual image dimensions
 
-  /// Hit-test radius in normalized coords (adapted per canvas size)
   static const double _hitRadius = 0.04;
 
   @override
@@ -175,6 +175,13 @@ class _LineEditorCanvasState extends State<_LineEditorCanvas> {
                 Image.file(
                   File(state.imagePath!),
                   fit: BoxFit.contain,
+                  frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
+                    // Get image dimensions once loaded
+                    if (frame != null && _imageSize == null) {
+                      _loadImageSize(state.imagePath!);
+                    }
+                    return child;
+                  },
                 )
               else
                 Container(
@@ -188,11 +195,12 @@ class _LineEditorCanvasState extends State<_LineEditorCanvas> {
                   ),
                 ),
 
-              // Lines overlay
+              // Lines overlay — pass imageSize for BoxFit.contain offset
               CustomPaint(
                 painter: LinePainter(
                   lines: state.lines,
                   selectedLineIndex: state.selectedLineIndex,
+                  imageSize: _imageSize,
                 ),
               ),
             ],
@@ -257,10 +265,30 @@ class _LineEditorCanvasState extends State<_LineEditorCanvas> {
     }
   }
 
-  Offset _normalize(Offset local, Size size) {
+  Offset _normalize(Offset local, Size canvasSize) {
+    if (_imageSize != null) {
+      final r = imageRect(canvasSize, _imageSize!);
+      return Offset(
+        ((local.dx - r.ox) / r.w).clamp(0.0, 1.0),
+        ((local.dy - r.oy) / r.h).clamp(0.0, 1.0),
+      );
+    }
     return Offset(
-      (local.dx / size.width).clamp(0.0, 1.0),
-      (local.dy / size.height).clamp(0.0, 1.0),
+      (local.dx / canvasSize.width).clamp(0.0, 1.0),
+      (local.dy / canvasSize.height).clamp(0.0, 1.0),
     );
+  }
+
+  void _loadImageSize(String path) {
+    final file = File(path);
+    file.readAsBytes().then((bytes) {
+      ui.decodeImageFromList(bytes, (ui.Image image) {
+        if (mounted) {
+          setState(() {
+            _imageSize = Size(image.width.toDouble(), image.height.toDouble());
+          });
+        }
+      });
+    });
   }
 }

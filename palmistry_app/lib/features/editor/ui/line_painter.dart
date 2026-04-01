@@ -13,15 +13,46 @@ Color lineColor(LineType type) {
   };
 }
 
+/// Compute the rect where the image is actually drawn when using BoxFit.contain.
+/// Returns (offsetX, offsetY, drawnWidth, drawnHeight).
+({double ox, double oy, double w, double h}) imageRect(
+    Size canvasSize, Size imageSize) {
+  final scaleX = canvasSize.width / imageSize.width;
+  final scaleY = canvasSize.height / imageSize.height;
+  final scale = scaleX < scaleY ? scaleX : scaleY;
+  final w = imageSize.width * scale;
+  final h = imageSize.height * scale;
+  final ox = (canvasSize.width - w) / 2;
+  final oy = (canvasSize.height - h) / 2;
+  return (ox: ox, oy: oy, w: w, h: h);
+}
+
 /// Draws all bezier lines and their control points over the palm image.
 class LinePainter extends CustomPainter {
   final List<EditableLine> lines;
   final int? selectedLineIndex;
+  final Size? imageSize; // actual image dimensions (pixels)
 
   const LinePainter({
     required this.lines,
     required this.selectedLineIndex,
+    this.imageSize,
   });
+
+  /// Convert normalized (0-1) point to canvas pixel position,
+  /// accounting for BoxFit.contain offset.
+  Offset _toCanvas(Offset normalized, Size canvasSize) {
+    if (imageSize != null) {
+      final r = imageRect(canvasSize, imageSize!);
+      return Offset(
+        r.ox + normalized.dx * r.w,
+        r.oy + normalized.dy * r.h,
+      );
+    }
+    // Fallback: no image size info — fill entire canvas
+    return Offset(normalized.dx * canvasSize.width,
+        normalized.dy * canvasSize.height);
+  }
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -38,7 +69,7 @@ class LinePainter extends CustomPainter {
   ) {
     final color = lineColor(line.type);
     final pts = line.controlPoints
-        .map((p) => Offset(p.dx * size.width, p.dy * size.height))
+        .map((p) => _toCanvas(p, size))
         .toList();
 
     if (pts.length < 2) return;
@@ -49,12 +80,10 @@ class LinePainter extends CustomPainter {
     if (pts.length == 2) {
       path.lineTo(pts[1].dx, pts[1].dy);
     } else {
-      // Use cubic bezier segments through control points
       for (int i = 0; i < pts.length - 1; i++) {
         final p0 = pts[i];
         final p1 = pts[i + 1];
 
-        // Control points: use neighbours if available
         final cp1 = i > 0
             ? Offset(
                 p0.dx + (p1.dx - pts[i - 1].dx) / 6,
@@ -81,7 +110,6 @@ class LinePainter extends CustomPainter {
 
     final strokeWidth = selected ? 3.0 : 2.0;
 
-    // Glow effect when selected
     if (selected) {
       canvas.drawPath(
         path,
@@ -112,12 +140,7 @@ class LinePainter extends CustomPainter {
       final isEndpoint = i == 0 || i == pts.length - 1;
 
       if (isEndpoint) {
-        // Filled circle for endpoints
-        canvas.drawCircle(
-          pt,
-          ptRadius,
-          Paint()..color = color,
-        );
+        canvas.drawCircle(pt, ptRadius, Paint()..color = color);
         canvas.drawCircle(
           pt,
           ptRadius,
@@ -127,7 +150,6 @@ class LinePainter extends CustomPainter {
             ..strokeWidth = 1.5,
         );
       } else {
-        // Hollow circle for handles
         canvas.drawCircle(
           pt,
           handleRadius,
@@ -137,10 +159,7 @@ class LinePainter extends CustomPainter {
             ..strokeWidth = 1.5,
         );
         canvas.drawCircle(
-          pt,
-          handleRadius,
-          Paint()..color = color.withAlpha(100),
-        );
+            pt, handleRadius, Paint()..color = color.withAlpha(100));
       }
     }
   }
@@ -148,6 +167,7 @@ class LinePainter extends CustomPainter {
   @override
   bool shouldRepaint(LinePainter oldDelegate) {
     return oldDelegate.lines != lines ||
-        oldDelegate.selectedLineIndex != selectedLineIndex;
+        oldDelegate.selectedLineIndex != selectedLineIndex ||
+        oldDelegate.imageSize != imageSize;
   }
 }
