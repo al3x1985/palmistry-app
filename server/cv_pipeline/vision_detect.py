@@ -121,5 +121,20 @@ Return ONLY valid JSON array:
         text = text.rsplit("```", 1)[0]
         text = text.strip()
 
-    lines = json.loads(text)
+    # Try to extract JSON array from response
+    try:
+        lines = json.loads(text)
+    except json.JSONDecodeError:
+        # Try to find JSON array in the text
+        start = text.find("[")
+        end = text.rfind("]")
+        if start != -1 and end != -1 and end > start:
+            try:
+                lines = json.loads(text[start:end + 1])
+            except json.JSONDecodeError:
+                # Last resort: return empty
+                lines = []
+        else:
+            lines = []
+
     return lines
